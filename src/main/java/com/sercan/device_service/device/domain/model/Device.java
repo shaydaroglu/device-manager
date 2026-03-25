@@ -10,8 +10,8 @@ public record Device(
         String name,
         String brand,
         DeviceState state,
-        Instant createdAt,
-        Instant updatedAt
+        Instant creationTime,
+        Instant updateTime
 ) {
     public Device {
         if (Strings.isBlank(name)) {

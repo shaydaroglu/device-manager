@@ -6,6 +6,8 @@ import com.sercan.device_service.device.domain.port.out.DevicePersistencePort;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -23,27 +25,27 @@ public class DevicePersistenceAdapter implements DevicePersistencePort {
     }
 
     @Override
-    public java.util.Optional<Device> findById(java.util.UUID id) {
+    public Optional<Device> findById(UUID id) {
         return deviceJpaRepository.findById(id)
                 .map(devicePersistenceMapper::toDomain);
     }
 
     @Override
-    public java.util.List<Device> findAll() {
+    public List<Device> findAll() {
         return deviceJpaRepository.findAll().stream()
                 .map(devicePersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
-    public java.util.List<Device> findByBrand(String brand) {
+    public List<Device> findByBrand(String brand) {
         return deviceJpaRepository.findByBrandIgnoreCase(brand).stream()
                 .map(devicePersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
-    public java.util.List<Device> findByState(com.sercan.device_service.device.domain.model.DeviceState state) {
+    public List<Device> findByState(com.sercan.device_service.device.domain.model.DeviceState state) {
         return deviceJpaRepository.findByState(state).stream()
                 .map(devicePersistenceMapper::toDomain)
                 .toList();
