@@ -1,10 +1,7 @@
 package com.sercan.device_service.device.adapter.out.persistence.entity;
 
 import com.sercan.device_service.device.domain.model.DeviceState;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,14 +26,15 @@ public class DeviceJpaEntity {
     @Column(nullable = false)
     private String brand;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DeviceState state;
 
     @Column(name = "creation_time", nullable = false, updatable = false, insertable = false)
-    private Instant createdAt;
+    private Instant creationTime;
 
     @Column(name = "update_time", nullable = false, updatable = false, insertable = false)
-    private Instant updatedAt;
+    private Instant updateTime;
 
     @Builder
     public DeviceJpaEntity(UUID id, String name, String brand, DeviceState state) {
