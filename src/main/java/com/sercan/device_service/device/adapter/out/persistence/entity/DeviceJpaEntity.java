@@ -32,10 +32,10 @@ public class DeviceJpaEntity {
     @Column(nullable = false)
     private DeviceState state;
 
-    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
+    @Column(name = "creation_time", nullable = false, updatable = false, insertable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at", nullable = false, updatable = false, insertable = false)
+    @Column(name = "update_time", nullable = false, updatable = false, insertable = false)
     private Instant updatedAt;
 
     @Builder
