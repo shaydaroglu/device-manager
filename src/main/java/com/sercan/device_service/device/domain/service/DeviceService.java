@@ -1,5 +1,9 @@
 package com.sercan.device_service.device.domain.service;
 
+import com.sercan.device_service.device.domain.exception.DeviceNotFoundException;
+import com.sercan.device_service.device.domain.exception.DeviceValidationException;
+import com.sercan.device_service.device.domain.exception.InUseDeviceDeletionException;
+import com.sercan.device_service.device.domain.exception.InUseDeviceModificationException;
 import com.sercan.device_service.device.domain.model.Device;
 import com.sercan.device_service.device.domain.model.DeviceState;
 import com.sercan.device_service.device.domain.port.in.DeviceManagementUseCase;
@@ -86,7 +90,7 @@ public class DeviceService implements DeviceManagementUseCase, DeviceQueryUseCas
         Device existing = getExistingDevice(id);
 
         if (existing.state() == DeviceState.IN_USE) {
-            throw new IllegalStateException("In-use devices cannot be deleted");
+            throw new InUseDeviceDeletionException(id);
         }
 
         devicePersistencePort.deleteById(id);
@@ -117,31 +121,31 @@ public class DeviceService implements DeviceManagementUseCase, DeviceQueryUseCas
 
     private void validateId(UUID id) {
         if (id == null) {
-            throw new IllegalArgumentException("Device id must not be null");
+            throw new DeviceValidationException("Device id must not be null");
         }
     }
 
     private void validateName(String name) {
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Device name must not be blank");
+            throw new DeviceValidationException("Device name must not be blank");
         }
     }
 
     private void validateBrand(String brand) {
         if (brand == null || brand.isBlank()) {
-            throw new IllegalArgumentException("Device brand must not be blank");
+            throw new DeviceValidationException("Device brand must not be blank");
         }
     }
 
     private void validateState(DeviceState state) {
         if (state == null) {
-            throw new IllegalArgumentException("Device state must not be null");
+            throw new DeviceValidationException("Device state must not be null");
         }
     }
 
     private Device getExistingDevice(UUID id) {
         return devicePersistencePort.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Device not found with id: " + id));
+                .orElseThrow(() -> new DeviceNotFoundException(id));
     }
 
     private void validateDeviceCanBeChanged(Device existing, String newName, String newBrand) {
@@ -150,7 +154,7 @@ public class DeviceService implements DeviceManagementUseCase, DeviceQueryUseCas
             boolean brandChanged = !existing.brand().equals(newBrand);
 
             if (nameChanged || brandChanged) {
-                throw new IllegalStateException("Name and brand cannot be updated when device is in use");
+                throw new InUseDeviceModificationException(existing.id());
             }
         }
     }
