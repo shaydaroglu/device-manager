@@ -1,6 +1,8 @@
 package com.sercan.device_service.device.adapter.out.persistence;
 
+import com.sercan.device_service.device.adapter.in.rest.dto.request.DeviceFilter;
 import com.sercan.device_service.device.adapter.out.persistence.repository.DeviceJpaRepository;
+import com.sercan.device_service.device.adapter.out.persistence.repository.DeviceSpecifications;
 import com.sercan.device_service.device.domain.model.Device;
 import com.sercan.device_service.device.domain.port.out.DevicePersistencePort;
 import lombok.AllArgsConstructor;
@@ -38,15 +40,9 @@ public class DevicePersistenceAdapter implements DevicePersistencePort {
     }
 
     @Override
-    public List<Device> findByBrand(String brand) {
-        return deviceJpaRepository.findByBrandIgnoreCase(brand).stream()
-                .map(devicePersistenceMapper::toDomain)
-                .toList();
-    }
-
-    @Override
-    public List<Device> findByState(com.sercan.device_service.device.domain.model.DeviceState state) {
-        return deviceJpaRepository.findByState(state).stream()
+    public List<Device> findByFilter(DeviceFilter filter) {
+        return deviceJpaRepository.findAll(DeviceSpecifications.byFilter(filter))
+                .stream()
                 .map(devicePersistenceMapper::toDomain)
                 .toList();
     }

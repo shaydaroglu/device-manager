@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -30,9 +32,11 @@ public class DeviceJpaEntity {
     @Column(nullable = false)
     private DeviceState state;
 
+    @CreationTimestamp
     @Column(name = "creation_time", nullable = false, updatable = false, insertable = false)
     private Instant creationTime;
 
+    @UpdateTimestamp
     @Column(name = "update_time", nullable = false, updatable = false, insertable = false)
     private Instant updateTime;
 
