@@ -81,8 +81,13 @@ public class DeviceService implements DeviceManagementUseCase, DeviceQueryUseCas
         String resolvedBrand = brand != null ? brand.trim() : existing.brand();
         DeviceState resolvedState = state != null ? state : existing.state();
 
-        validateName(name);
-        validateBrand(brand);
+        if (name != null) {
+            validateName(name);
+        }
+        if (brand != null) {
+            validateBrand(brand);
+        }
+
         validateDeviceCanBeChanged(existing, resolvedName, resolvedBrand);
 
         Device patchedDevice = new Device(

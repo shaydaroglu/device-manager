@@ -1,6 +1,7 @@
 package com.sercan.device_service.device.adapter.in.rest;
 
 import com.sercan.device_service.device.adapter.in.rest.dto.response.ErrorResponseDto;
+import com.sercan.device_service.device.adapter.in.rest.exception.PatchValidationException;
 import com.sercan.device_service.device.adapter.in.rest.exception.SearchFilterValidationException;
 import com.sercan.device_service.device.domain.exception.DeviceNotFoundException;
 import com.sercan.device_service.device.domain.exception.DeviceValidationException;
@@ -65,6 +66,16 @@ public class RestExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponseDto handleSearchFilterValidationException(SearchFilterValidationException ex, HttpServletRequest request) {
         log.warn("Request validation failed: method='{}', path='{}', reason='{}'",
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getMessage());
+        return new ErrorResponseDto(Instant.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+    }
+
+    @ExceptionHandler(PatchValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponseDto handlePatchValidationException(PatchValidationException ex, HttpServletRequest request) {
+        log.warn("Patch validation failed: method='{}', path='{}', reason='{}'",
                 request.getMethod(),
                 request.getRequestURI(),
                 ex.getMessage());

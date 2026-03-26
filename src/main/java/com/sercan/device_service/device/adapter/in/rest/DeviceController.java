@@ -6,7 +6,7 @@ import com.sercan.device_service.device.adapter.in.rest.dto.request.PatchDeviceR
 import com.sercan.device_service.device.adapter.in.rest.dto.request.UpdateDeviceRequestDto;
 import com.sercan.device_service.device.adapter.in.rest.dto.response.DeviceResponseDto;
 import com.sercan.device_service.device.adapter.in.rest.dto.response.ErrorResponseDto;
-import com.sercan.device_service.device.adapter.in.rest.exception.SearchFilterValidationException;
+import com.sercan.device_service.device.adapter.in.rest.validator.RequestValidator;
 import com.sercan.device_service.device.domain.model.Device;
 import com.sercan.device_service.device.domain.model.DeviceState;
 import com.sercan.device_service.device.domain.port.in.DeviceManagementUseCase;
@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,8 +30,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
-
-import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Slf4j
 @Tag(name = "Devices", description = "Operations for managing device resources")
@@ -44,6 +41,7 @@ public class DeviceController {
     private DeviceManagementUseCase deviceManagementUseCase;
     private DeviceQueryUseCase deviceQueryUseCase;
     private DeviceRestMapper deviceMapper;
+    private RequestValidator requestValidator;
 
     @Operation(
             summary = "Create a new device",
@@ -231,9 +229,7 @@ public class DeviceController {
             @RequestParam(required = false) String brand,
             @RequestParam(required = false) DeviceState state
     ) {
-        if(isBlank(name) && isBlank(brand) && state == null) {
-            throw new SearchFilterValidationException();
-        }
+        requestValidator.validateSearchFilter(name, brand, state);
 
         DeviceFilter filter = new DeviceFilter(name, brand, state);
         log.debug("Received device search request filter={}", filter);
@@ -361,7 +357,9 @@ public class DeviceController {
     @PatchMapping("/{id}")
     public ResponseEntity<DeviceResponseDto> patchDevice(
             @PathVariable String id,
-            @Valid @RequestBody PatchDeviceRequestDto request) {
+            @RequestBody PatchDeviceRequestDto request) {
+        requestValidator.validatePatch(request);
+
         Device patchedDevice = deviceManagementUseCase.patch(
                 id,
                 request.name(),
