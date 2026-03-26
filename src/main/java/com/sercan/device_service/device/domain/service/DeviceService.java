@@ -124,10 +124,12 @@ public class DeviceService implements DeviceManagementUseCase, DeviceQueryUseCas
     }
 
     @Override
-    public Device getById(String id) {
+    public Device getById(UUID id) {
         log.debug("Fetching device by id='{}'", id);
-        validateId(id);
-        return getExistingDevice(UUID.fromString(id));
+        if(id == null) {
+            throw new DeviceValidationException("Device id must not be null");
+        }
+        return getExistingDevice(id);
     }
 
     @Override

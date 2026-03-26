@@ -505,7 +505,7 @@ class DeviceServiceTest extends BaseUnitTest {
             when(devicePersistencePort.findById(TEST_UUID)).thenReturn(Optional.of(device));
 
             // When
-            Device result = deviceService.getById(TEST_UUID.toString());
+            Device result = deviceService.getById(TEST_UUID);
 
             // Then
             assertThat(result).isNotNull();
@@ -523,19 +523,11 @@ class DeviceServiceTest extends BaseUnitTest {
         }
 
         @Test
-        @DisplayName("should throw exception when id is invalid UUID format")
-        void shouldThrowExceptionWhenIdIsInvalidUUID() {
-            assertThatThrownBy(() -> deviceService.getById("not-a-uuid"))
-                    .isInstanceOf(DeviceValidationException.class)
-                    .hasMessageContaining("Invalid UUID format");
-        }
-
-        @Test
         @DisplayName("should throw exception when device does not exist")
         void shouldThrowExceptionWhenDeviceNotFound() {
             when(devicePersistencePort.findById(TEST_UUID)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> deviceService.getById(TEST_UUID.toString()))
+            assertThatThrownBy(() -> deviceService.getById(TEST_UUID))
                     .isInstanceOf(DeviceNotFoundException.class);
         }
     }

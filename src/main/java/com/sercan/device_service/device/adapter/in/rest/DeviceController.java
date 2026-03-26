@@ -141,7 +141,7 @@ public class DeviceController {
                     description = "Unique device identifier in UUID format",
                     example = "550e8400-e29b-41d4-a716-446655440000"
             )
-            @PathVariable String id
+            @PathVariable UUID id
     ) {
         log.debug("Received get device request for id='{}'", id);
         Device device = deviceQueryUseCase.getById(id);
