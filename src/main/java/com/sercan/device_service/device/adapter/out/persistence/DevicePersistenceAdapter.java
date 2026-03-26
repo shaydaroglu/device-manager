@@ -1,6 +1,7 @@
 package com.sercan.device_service.device.adapter.out.persistence;
 
 import com.sercan.device_service.device.adapter.in.rest.dto.request.DeviceFilter;
+import com.sercan.device_service.device.adapter.out.persistence.entity.DeviceJpaEntity;
 import com.sercan.device_service.device.adapter.out.persistence.repository.DeviceJpaRepository;
 import com.sercan.device_service.device.adapter.out.persistence.repository.DeviceSpecifications;
 import com.sercan.device_service.device.domain.model.Device;
@@ -21,9 +22,21 @@ public class DevicePersistenceAdapter implements DevicePersistencePort {
 
     @Override
     public Device save(Device device) {
-        var entity = devicePersistenceMapper.toEntity(device);
-        var savedEntity = deviceJpaRepository.save(entity);
-        return devicePersistenceMapper.toDomain(savedEntity);
+        DeviceJpaEntity entity = deviceJpaRepository.findById(device.id())
+                .map(existing -> {
+                    existing.setName(device.name());
+                    existing.setBrand(device.brand());
+                    existing.setState(device.state());
+                    return existing;
+                })
+                .orElseGet(() -> devicePersistenceMapper.toEntity(device));
+
+        DeviceJpaEntity savedEntity = deviceJpaRepository.save(entity);
+
+        DeviceJpaEntity reloadedEntity = deviceJpaRepository.findById(savedEntity.getId())
+                .orElseThrow(() -> new IllegalStateException("Saved device could not be reloaded"));
+
+        return devicePersistenceMapper.toDomain(reloadedEntity);
     }
 
     @Override
