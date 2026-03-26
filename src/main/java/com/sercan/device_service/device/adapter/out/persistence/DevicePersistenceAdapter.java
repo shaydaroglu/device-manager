@@ -7,12 +7,14 @@ import com.sercan.device_service.device.adapter.out.persistence.repository.Devic
 import com.sercan.device_service.device.domain.model.Device;
 import com.sercan.device_service.device.domain.port.out.DevicePersistencePort;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Component
 @AllArgsConstructor
 public class DevicePersistenceAdapter implements DevicePersistencePort {
@@ -22,6 +24,7 @@ public class DevicePersistenceAdapter implements DevicePersistencePort {
 
     @Override
     public Device save(Device device) {
+        log.debug("Persisting device (id='{}', name='{}', brand='{}')", device.id(), device.name(), device.brand());
         DeviceJpaEntity entity = deviceJpaRepository.findById(device.id())
                 .map(existing -> {
                     existing.setName(device.name());
@@ -34,8 +37,12 @@ public class DevicePersistenceAdapter implements DevicePersistencePort {
         DeviceJpaEntity savedEntity = deviceJpaRepository.save(entity);
 
         DeviceJpaEntity reloadedEntity = deviceJpaRepository.findById(savedEntity.getId())
-                .orElseThrow(() -> new IllegalStateException("Saved device could not be reloaded"));
+                .orElseThrow(() -> {
+                    log.error("Device was saved but could not be reloaded, id='{}'", savedEntity.getId());
+                    return new IllegalStateException("Saved device could not be reloaded");
+                });
 
+        log.debug("Device persisted successfully with id='{}'", reloadedEntity.getId());
         return devicePersistenceMapper.toDomain(reloadedEntity);
     }
 

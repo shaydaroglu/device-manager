@@ -24,6 +24,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,6 +34,7 @@ import java.util.UUID;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
+@Slf4j
 @Tag(name = "Devices", description = "Operations for managing device resources")
 @RestController
 @RequestMapping("/api/v1/devices")
@@ -77,6 +79,7 @@ public class DeviceController {
     })
     @PostMapping
     public ResponseEntity<DeviceResponseDto> createDevice(@Valid @RequestBody CreateDeviceRequestDto request) {
+        log.info("Received create device request");
         Device createdDevice = deviceManagementUseCase.create(request.name(), request.brand(), request.state());
 
         var response = deviceMapper.deviceToDto(createdDevice);
@@ -142,6 +145,7 @@ public class DeviceController {
             )
             @PathVariable String id
     ) {
+        log.debug("Received get device request for id='{}'", id);
         Device device = deviceQueryUseCase.getById(id);
 
         return ResponseEntity.ok(deviceMapper.deviceToDto(device));
@@ -163,6 +167,7 @@ public class DeviceController {
     })
     @GetMapping
     public ResponseEntity<List<DeviceResponseDto>> getAllDevices() {
+        log.debug("Received get all devices request");
         var response = deviceQueryUseCase.getAll()
                 .stream()
                 .map(deviceMapper::deviceToDto)
@@ -230,7 +235,10 @@ public class DeviceController {
             throw new SearchFilterValidationException();
         }
 
-        List<Device> devices = deviceQueryUseCase.findByFilter(new DeviceFilter(name, brand, state));
+        DeviceFilter filter = new DeviceFilter(name, brand, state);
+        log.debug("Received device search request filter={}", filter);
+
+        List<Device> devices = deviceQueryUseCase.findByFilter(filter);
 
         List<DeviceResponseDto> response = devices.stream()
                 .map(deviceMapper::deviceToDto)

@@ -8,6 +8,7 @@ import com.sercan.device_service.device.domain.exception.InUseDeviceDeletionExce
 import com.sercan.device_service.device.domain.exception.InUseDeviceModificationException;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -21,6 +22,7 @@ import tools.jackson.databind.exc.InvalidFormatException;
 import java.time.Instant;
 import java.util.Arrays;
 
+@Slf4j
 @Hidden
 @RestControllerAdvice
 public class RestExceptionHandler {
@@ -28,36 +30,50 @@ public class RestExceptionHandler {
     @ExceptionHandler(DeviceValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponseDto handleDeviceValidationException(DeviceValidationException ex) {
+        log.warn("Device validation failed: message='{}'", ex.getMessage());
         return new ErrorResponseDto(Instant.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage());
     }
 
     @ExceptionHandler(DeviceNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponseDto handleDeviceNotFoundException(DeviceNotFoundException ex) {
+    public ErrorResponseDto handleDeviceNotFoundException(DeviceNotFoundException ex, HttpServletRequest request) {
+        log.warn("Device not found: path='{}', message='{}'", request.getRequestURI(), ex.getMessage());
         return new ErrorResponseDto(Instant.now(), HttpStatus.NOT_FOUND.value(), ex.getMessage());
     }
 
     @ExceptionHandler(InUseDeviceDeletionException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponseDto handleInUseDeviceDeletionException(InUseDeviceDeletionException ex) {
+    public ErrorResponseDto handleInUseDeviceDeletionException(InUseDeviceDeletionException ex, HttpServletRequest request) {
+        log.warn("Request conflict: method='{}', path='{}', reason='{}'",
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getMessage());
         return new ErrorResponseDto(Instant.now(), HttpStatus.CONFLICT.value(), ex.getMessage());
     }
 
     @ExceptionHandler(InUseDeviceModificationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponseDto handleInUseDeviceModificationException(InUseDeviceModificationException ex) {
+    public ErrorResponseDto handleInUseDeviceModificationException(InUseDeviceModificationException ex, HttpServletRequest request) {
+        log.warn("Request conflict: method='{}', path='{}', reason='{}'",
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getMessage());
         return new ErrorResponseDto(Instant.now(), HttpStatus.CONFLICT.value(), ex.getMessage());
     }
 
     @ExceptionHandler(SearchFilterValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponseDto handleSearchFilterValidationException(SearchFilterValidationException ex) {
+    public ErrorResponseDto handleSearchFilterValidationException(SearchFilterValidationException ex, HttpServletRequest request) {
+        log.warn("Request validation failed: method='{}', path='{}', reason='{}'",
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getMessage());
         return new ErrorResponseDto(Instant.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponseDto handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+    public ErrorResponseDto handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         String message = "Invalid value for parameter: " + ex.getName();
 
         if (ex.getRequiredType() != null && ex.getRequiredType().isEnum()) {
@@ -65,6 +81,12 @@ public class RestExceptionHandler {
             message = "Invalid value for parameter '" + ex.getName()
                     + "'. Allowed values: " + java.util.Arrays.toString(enumValues);
         }
+
+        log.warn("Request validation failed: method='{}', path='{}', parameter='{}', reason='{}'",
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getName(),
+                message);
 
         return new ErrorResponseDto(Instant.now(), HttpStatus.BAD_REQUEST.value(), message);
     }
@@ -92,6 +114,11 @@ public class RestExceptionHandler {
             }
         }
 
+        log.warn("Request body validation failed: method='{}', path='{}', reason='{}'",
+                request.getMethod(),
+                request.getRequestURI(),
+                message);
+
         return new ErrorResponseDto(
                 Instant.now(),
                 HttpStatus.BAD_REQUEST.value(),
@@ -110,6 +137,11 @@ public class RestExceptionHandler {
         if (ex.getSupportedMethods() != null && ex.getSupportedMethods().length > 0) {
             message += " Supported methods: " + Arrays.toString(ex.getSupportedMethods());
         }
+
+        log.warn("Unsupported HTTP method: method='{}', path='{}', reason='{}'",
+                request.getMethod(),
+                request.getRequestURI(),
+                message);
 
         return new ErrorResponseDto(
                 Instant.now(),
