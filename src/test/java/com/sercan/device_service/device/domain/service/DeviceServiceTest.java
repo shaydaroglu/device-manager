@@ -618,4 +618,207 @@ class DeviceServiceTest extends BaseUnitTest {
             verify(devicePersistencePort).findByFilter(filter);
         }
     }
+
+    @Nested
+    @DisplayName("Device Model Validation Tests")
+    class DeviceModelValidationTests {
+
+        @Test
+        @DisplayName("should throw IllegalArgumentException when creating device with blank name in record")
+        void shouldThrowWhenDeviceNameIsBlankInRecord() {
+            assertThatThrownBy(() -> new Device(TEST_UUID, "  ", TEST_BRAND, DeviceState.AVAILABLE, Instant.now(), null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Device name cannot be null or blank");
+        }
+
+        @Test
+        @DisplayName("should throw IllegalArgumentException when creating device with blank brand in record")
+        void shouldThrowWhenDeviceBrandIsBlankInRecord() {
+            assertThatThrownBy(() -> new Device(TEST_UUID, TEST_NAME, "  ", DeviceState.AVAILABLE, Instant.now(), null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Device brand cannot be null or blank");
+        }
+
+        @Test
+        @DisplayName("should throw IllegalArgumentException when creating device with null state in record")
+        void shouldThrowWhenDeviceStateIsNullInRecord() {
+            assertThatThrownBy(() -> new Device(TEST_UUID, TEST_NAME, TEST_BRAND, null, Instant.now(), null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Device state cannot be null");
+        }
+
+        @Test
+        @DisplayName("Device.newDevice() should create device with proper defaults")
+        void shouldCreateDeviceWithProperDefaults() {
+            Device device = Device.newDevice(TEST_NAME, TEST_BRAND, DeviceState.AVAILABLE);
+
+            assertThat(device).isNotNull();
+            assertThat(device.id()).isNotNull();
+            assertThat(device.name()).isEqualTo(TEST_NAME);
+            assertThat(device.brand()).isEqualTo(TEST_BRAND);
+            assertThat(device.state()).isEqualTo(DeviceState.AVAILABLE);
+            assertThat(device.creationTime()).isNull();
+            assertThat(device.updateTime()).isNull();
+        }
+
+        @Test
+        @DisplayName("Device.newDevice() should default to INACTIVE when state is null")
+        void shouldDefaultToInactiveStateWhenNull() {
+            Device device = Device.newDevice(TEST_NAME, TEST_BRAND, null);
+
+            assertThat(device.state()).isEqualTo(DeviceState.INACTIVE);
+        }
+    }
+
+    @Nested
+    @DisplayName("Create Trimming and Edge Cases Tests")
+    class CreateTrimmingTests {
+
+        @Test
+        @DisplayName("should trim only whitespace without changing actual content")
+        void shouldTrimOnlyWhitespaceNotContent() {
+            Device createdDevice = new Device(TEST_UUID, "Valid Name", "Valid Brand", DeviceState.AVAILABLE, Instant.now(), null);
+            when(devicePersistencePort.save(any(Device.class))).thenReturn(createdDevice);
+
+            deviceService.create("  Valid Name  ", "  Valid Brand  ", DeviceState.AVAILABLE);
+
+            ArgumentCaptor<Device> captor = ArgumentCaptor.forClass(Device.class);
+            verify(devicePersistencePort).save(captor.capture());
+
+            assertThat(captor.getValue().name()).isEqualTo("Valid Name");
+            assertThat(captor.getValue().brand()).isEqualTo("Valid Brand");
+        }
+
+        @Test
+        @DisplayName("should preserve internal spaces when trimming")
+        void shouldPreserveInternalSpaces() {
+            Device createdDevice = new Device(TEST_UUID, "Device With Spaces", "Brand Name Here", DeviceState.AVAILABLE, Instant.now(), null);
+            when(devicePersistencePort.save(any(Device.class))).thenReturn(createdDevice);
+
+            deviceService.create("  Device With Spaces  ", "  Brand Name Here  ", DeviceState.AVAILABLE);
+
+            ArgumentCaptor<Device> captor = ArgumentCaptor.forClass(Device.class);
+            verify(devicePersistencePort).save(captor.capture());
+
+            assertThat(captor.getValue().name()).isEqualTo("Device With Spaces");
+            assertThat(captor.getValue().brand()).isEqualTo("Brand Name Here");
+        }
+
+        @Test
+        @DisplayName("should call save method exactly once")
+        void shouldCallSaveMethodExactlyOnce() {
+            Device createdDevice = new Device(TEST_UUID, TEST_NAME, TEST_BRAND, DeviceState.AVAILABLE, Instant.now(), null);
+            when(devicePersistencePort.save(any(Device.class))).thenReturn(createdDevice);
+
+            deviceService.create(TEST_NAME, TEST_BRAND, DeviceState.AVAILABLE);
+
+            verify(devicePersistencePort).save(any(Device.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("Port Interaction and Exact Call Verification Tests")
+    class PortInteractionTests {
+
+        @Test
+        @DisplayName("update should call findById with correct UUID")
+        void shouldCallFindByIdWithCorrectUUID() {
+            Device existingDevice = new Device(TEST_UUID, TEST_NAME, TEST_BRAND, DeviceState.AVAILABLE, Instant.now(), null);
+            Device updatedDevice = new Device(TEST_UUID, "New Name", TEST_BRAND, DeviceState.AVAILABLE, Instant.now(), Instant.now());
+
+            when(devicePersistencePort.findById(TEST_UUID)).thenReturn(Optional.of(existingDevice));
+            when(devicePersistencePort.save(any(Device.class))).thenReturn(updatedDevice);
+
+            deviceService.update(TEST_UUID.toString(), "New Name", TEST_BRAND, DeviceState.AVAILABLE);
+
+            ArgumentCaptor<UUID> uuidCaptor = ArgumentCaptor.forClass(UUID.class);
+            verify(devicePersistencePort).findById(uuidCaptor.capture());
+
+            assertThat(uuidCaptor.getValue()).isEqualTo(TEST_UUID);
+        }
+
+        @Test
+        @DisplayName("delete should call findById before deleteById")
+        void shouldCallFindByIdBeforeDelete() {
+            Device existingDevice = new Device(TEST_UUID, TEST_NAME, TEST_BRAND, DeviceState.AVAILABLE, Instant.now(), null);
+            when(devicePersistencePort.findById(TEST_UUID)).thenReturn(Optional.of(existingDevice));
+
+            deviceService.delete(TEST_UUID);
+
+            verify(devicePersistencePort).findById(TEST_UUID);
+            verify(devicePersistencePort).deleteById(TEST_UUID);
+        }
+
+        @Test
+        @DisplayName("getAll should return list exactly as provided by port")
+        void shouldReturnListExactlyAsProvidedByPort() {
+            Device device1 = new Device(UUID.randomUUID(), "Device 1", "Brand 1", DeviceState.AVAILABLE, Instant.now(), null);
+            Device device2 = new Device(UUID.randomUUID(), "Device 2", "Brand 2", DeviceState.IN_USE, Instant.now(), null);
+            List<Device> expectedList = List.of(device1, device2);
+
+            when(devicePersistencePort.findAll()).thenReturn(expectedList);
+
+            List<Device> result = deviceService.getAll();
+
+            assertThat(result).isInstanceOf(List.class);
+            assertThat(result).containsExactlyElementsOf(expectedList);
+        }
+    }
+
+    @Nested
+    @DisplayName("State Transitions and Business Logic Tests")
+    class StateTransitionTests {
+
+        @Test
+        @DisplayName("should allow transitioning from AVAILABLE to IN_USE")
+        void shouldAllowAvailableToInUseTransition() {
+            Device availableDevice = new Device(TEST_UUID, TEST_NAME, TEST_BRAND, DeviceState.AVAILABLE, Instant.now(), null);
+            Device inUseDevice = new Device(TEST_UUID, TEST_NAME, TEST_BRAND, DeviceState.IN_USE, Instant.now(), Instant.now());
+
+            when(devicePersistencePort.findById(TEST_UUID)).thenReturn(Optional.of(availableDevice));
+            when(devicePersistencePort.save(any(Device.class))).thenReturn(inUseDevice);
+
+            Device result = deviceService.update(TEST_UUID.toString(), TEST_NAME, TEST_BRAND, DeviceState.IN_USE);
+
+            assertThat(result.state()).isEqualTo(DeviceState.IN_USE);
+        }
+
+        @Test
+        @DisplayName("should allow transitioning from IN_USE to AVAILABLE")
+        void shouldAllowInUseToAvailableTransition() {
+            Device inUseDevice = new Device(TEST_UUID, TEST_NAME, TEST_BRAND, DeviceState.IN_USE, Instant.now(), null);
+            Device availableDevice = new Device(TEST_UUID, TEST_NAME, TEST_BRAND, DeviceState.AVAILABLE, Instant.now(), Instant.now());
+
+            when(devicePersistencePort.findById(TEST_UUID)).thenReturn(Optional.of(inUseDevice));
+            when(devicePersistencePort.save(any(Device.class))).thenReturn(availableDevice);
+
+            Device result = deviceService.update(TEST_UUID.toString(), TEST_NAME, TEST_BRAND, DeviceState.AVAILABLE);
+
+            assertThat(result.state()).isEqualTo(DeviceState.AVAILABLE);
+        }
+
+        @Test
+        @DisplayName("should allow transitioning from any state to INACTIVE")
+        void shouldAllowAnyStateToInactiveTransition() {
+            Device availableDevice = new Device(TEST_UUID, TEST_NAME, TEST_BRAND, DeviceState.AVAILABLE, Instant.now(), null);
+            Device inactiveDevice = new Device(TEST_UUID, TEST_NAME, TEST_BRAND, DeviceState.INACTIVE, Instant.now(), Instant.now());
+
+            when(devicePersistencePort.findById(TEST_UUID)).thenReturn(Optional.of(availableDevice));
+            when(devicePersistencePort.save(any(Device.class))).thenReturn(inactiveDevice);
+
+            Device result = deviceService.update(TEST_UUID.toString(), TEST_NAME, TEST_BRAND, DeviceState.INACTIVE);
+
+            assertThat(result.state()).isEqualTo(DeviceState.INACTIVE);
+        }
+
+        @Test
+        @DisplayName("should not allow name change even when state change is valid")
+        void shouldNotAllowNameChangeEvenWithValidStateChange() {
+            Device inUseDevice = new Device(TEST_UUID, TEST_NAME, TEST_BRAND, DeviceState.IN_USE, Instant.now(), null);
+            when(devicePersistencePort.findById(TEST_UUID)).thenReturn(Optional.of(inUseDevice));
+
+            assertThatThrownBy(() -> deviceService.update(TEST_UUID.toString(), "New Name", TEST_BRAND, DeviceState.AVAILABLE))
+                    .isInstanceOf(InUseDeviceModificationException.class);
+        }
+    }
 }
