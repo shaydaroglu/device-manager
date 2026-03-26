@@ -1,13 +1,12 @@
 package com.sercan.device_service.device.adapter.in.rest;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-
-import com.sercan.device_service.device.adapter.in.rest.dto.response.ErrorResponse;
+import com.sercan.device_service.device.adapter.in.rest.dto.response.ErrorResponseDto;
 import com.sercan.device_service.device.adapter.in.rest.exception.SearchFilterValidationException;
 import com.sercan.device_service.device.domain.exception.DeviceNotFoundException;
 import com.sercan.device_service.device.domain.exception.DeviceValidationException;
 import com.sercan.device_service.device.domain.exception.InUseDeviceDeletionException;
 import com.sercan.device_service.device.domain.exception.InUseDeviceModificationException;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -22,42 +21,43 @@ import tools.jackson.databind.exc.InvalidFormatException;
 import java.time.Instant;
 import java.util.Arrays;
 
+@Hidden
 @RestControllerAdvice
 public class RestExceptionHandler {
 
     @ExceptionHandler(DeviceValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleDeviceValidationException(DeviceValidationException ex) {
-        return new ErrorResponse(Instant.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+    public ErrorResponseDto handleDeviceValidationException(DeviceValidationException ex) {
+        return new ErrorResponseDto(Instant.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage());
     }
 
     @ExceptionHandler(DeviceNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleDeviceNotFoundException(DeviceNotFoundException ex) {
-        return new ErrorResponse(Instant.now(), HttpStatus.NOT_FOUND.value(), ex.getMessage());
+    public ErrorResponseDto handleDeviceNotFoundException(DeviceNotFoundException ex) {
+        return new ErrorResponseDto(Instant.now(), HttpStatus.NOT_FOUND.value(), ex.getMessage());
     }
 
     @ExceptionHandler(InUseDeviceDeletionException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleInUseDeviceDeletionException(InUseDeviceDeletionException ex) {
-        return new ErrorResponse(Instant.now(), HttpStatus.CONFLICT.value(), ex.getMessage());
+    public ErrorResponseDto handleInUseDeviceDeletionException(InUseDeviceDeletionException ex) {
+        return new ErrorResponseDto(Instant.now(), HttpStatus.CONFLICT.value(), ex.getMessage());
     }
 
     @ExceptionHandler(InUseDeviceModificationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleInUseDeviceModificationException(InUseDeviceModificationException ex) {
-        return new ErrorResponse(Instant.now(), HttpStatus.CONFLICT.value(), ex.getMessage());
+    public ErrorResponseDto handleInUseDeviceModificationException(InUseDeviceModificationException ex) {
+        return new ErrorResponseDto(Instant.now(), HttpStatus.CONFLICT.value(), ex.getMessage());
     }
 
     @ExceptionHandler(SearchFilterValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleSearchFilterValidationException(SearchFilterValidationException ex) {
-        return new ErrorResponse(Instant.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+    public ErrorResponseDto handleSearchFilterValidationException(SearchFilterValidationException ex) {
+        return new ErrorResponseDto(Instant.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+    public ErrorResponseDto handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String message = "Invalid value for parameter: " + ex.getName();
 
         if (ex.getRequiredType() != null && ex.getRequiredType().isEnum()) {
@@ -66,12 +66,12 @@ public class RestExceptionHandler {
                     + "'. Allowed values: " + java.util.Arrays.toString(enumValues);
         }
 
-        return new ErrorResponse(Instant.now(), HttpStatus.BAD_REQUEST.value(), message);
+        return new ErrorResponseDto(Instant.now(), HttpStatus.BAD_REQUEST.value(), message);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleHttpMessageNotReadable(
+    public ErrorResponseDto handleHttpMessageNotReadable(
             HttpMessageNotReadableException ex,
             HttpServletRequest request
     ) {
@@ -92,7 +92,7 @@ public class RestExceptionHandler {
             }
         }
 
-        return new ErrorResponse(
+        return new ErrorResponseDto(
                 Instant.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 message
@@ -101,7 +101,7 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
-    public ErrorResponse handleMethodNotSupported(
+    public ErrorResponseDto handleMethodNotSupported(
             HttpRequestMethodNotSupportedException ex,
             HttpServletRequest request
     ) {
@@ -111,7 +111,7 @@ public class RestExceptionHandler {
             message += " Supported methods: " + Arrays.toString(ex.getSupportedMethods());
         }
 
-        return new ErrorResponse(
+        return new ErrorResponseDto(
                 Instant.now(),
                 HttpStatus.METHOD_NOT_ALLOWED.value(),
                 message
