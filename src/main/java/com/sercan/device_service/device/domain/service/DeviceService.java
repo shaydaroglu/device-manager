@@ -1,6 +1,6 @@
 package com.sercan.device_service.device.domain.service;
 
-import com.sercan.device_service.device.adapter.in.rest.dto.request.DeviceFilter;
+import com.sercan.device_service.device.domain.model.DeviceFilter;
 import com.sercan.device_service.device.domain.exception.DeviceNotFoundException;
 import com.sercan.device_service.device.domain.exception.DeviceValidationException;
 import com.sercan.device_service.device.domain.exception.InUseDeviceDeletionException;

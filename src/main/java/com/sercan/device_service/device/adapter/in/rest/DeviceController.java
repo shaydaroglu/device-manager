@@ -1,7 +1,7 @@
 package com.sercan.device_service.device.adapter.in.rest;
 
 import com.sercan.device_service.device.adapter.in.rest.dto.request.CreateDeviceRequestDto;
-import com.sercan.device_service.device.adapter.in.rest.dto.request.DeviceFilter;
+import com.sercan.device_service.device.domain.model.DeviceFilter;
 import com.sercan.device_service.device.adapter.in.rest.dto.request.PatchDeviceRequestDto;
 import com.sercan.device_service.device.adapter.in.rest.dto.request.UpdateDeviceRequestDto;
 import com.sercan.device_service.device.adapter.in.rest.dto.response.DeviceResponseDto;

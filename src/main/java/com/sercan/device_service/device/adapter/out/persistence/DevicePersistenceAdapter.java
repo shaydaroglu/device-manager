@@ -1,6 +1,6 @@
 package com.sercan.device_service.device.adapter.out.persistence;
 
-import com.sercan.device_service.device.adapter.in.rest.dto.request.DeviceFilter;
+import com.sercan.device_service.device.domain.model.DeviceFilter;
 import com.sercan.device_service.device.adapter.out.persistence.entity.DeviceJpaEntity;
 import com.sercan.device_service.device.adapter.out.persistence.repository.DeviceJpaRepository;
 import com.sercan.device_service.device.adapter.out.persistence.repository.DeviceSpecifications;
