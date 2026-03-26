@@ -1,4 +1,4 @@
-package com.sercan.device_service.device.adapter.in.rest;
+package com.sercan.device_service.device.adapter.in.rest.dto.response;
 
 import java.time.Instant;
 
