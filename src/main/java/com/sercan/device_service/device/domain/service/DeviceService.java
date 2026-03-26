@@ -1,5 +1,6 @@
 package com.sercan.device_service.device.domain.service;
 
+import com.sercan.device_service.device.adapter.in.rest.dto.request.DeviceFilter;
 import com.sercan.device_service.device.domain.exception.DeviceNotFoundException;
 import com.sercan.device_service.device.domain.exception.DeviceValidationException;
 import com.sercan.device_service.device.domain.exception.InUseDeviceDeletionException;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Service
 @AllArgsConstructor
@@ -36,13 +39,14 @@ public class DeviceService implements DeviceManagementUseCase, DeviceQueryUseCas
     }
 
     @Override
-    public Device update(UUID id, String name, String brand, DeviceState state) {
+    public Device update(String id, String name, String brand, DeviceState state) {
         validateId(id);
         validateName(name);
         validateBrand(brand);
         validateState(state);
 
-        Device existing = getExistingDevice(id);
+        UUID uuid = UUID.fromString(id);
+        Device existing = getExistingDevice(uuid);
 
         validateDeviceCanBeChanged(existing, name, brand);
 
@@ -59,10 +63,11 @@ public class DeviceService implements DeviceManagementUseCase, DeviceQueryUseCas
     }
 
     @Override
-    public Device patch(UUID id, String name, String brand, DeviceState state) {
+    public Device patch(String id, String name, String brand, DeviceState state) {
         validateId(id);
+        UUID uuid = UUID.fromString(id);
 
-        Device existing = getExistingDevice(id);
+        Device existing = getExistingDevice(uuid);
         String resolvedName = name != null ? name.trim() : existing.name();
         String resolvedBrand = brand != null ? brand.trim() : existing.brand();
         DeviceState resolvedState = state != null ? state : existing.state();
@@ -84,22 +89,24 @@ public class DeviceService implements DeviceManagementUseCase, DeviceQueryUseCas
     }
 
     @Override
-    public void delete(UUID id) {
-        validateId(id);
-
-        Device existing = getExistingDevice(id);
-
-        if (existing.state() == DeviceState.IN_USE) {
-            throw new InUseDeviceDeletionException(id);
+    public void delete(UUID uuid) {
+        if(uuid == null) {
+            throw new DeviceValidationException("Device id must not be null");
         }
 
-        devicePersistencePort.deleteById(id);
+        Device existing = getExistingDevice(uuid);
+
+        if (existing.state() == DeviceState.IN_USE) {
+            throw new InUseDeviceDeletionException(uuid);
+        }
+
+        devicePersistencePort.deleteById(uuid);
     }
 
     @Override
-    public Device getById(UUID id) {
+    public Device getById(String id) {
         validateId(id);
-        return getExistingDevice(id);
+        return getExistingDevice(UUID.fromString(id));
     }
 
     @Override
@@ -108,31 +115,30 @@ public class DeviceService implements DeviceManagementUseCase, DeviceQueryUseCas
     }
 
     @Override
-    public List<Device> getByBrand(String brand) {
-        validateBrand(brand);
-        return devicePersistencePort.findByBrand(brand.trim());
+    public List<Device> findByFilter(DeviceFilter filter) {
+        return devicePersistencePort.findByFilter(filter);
     }
 
-    @Override
-    public List<Device> getByState(DeviceState state) {
-        validateState(state);
-        return devicePersistencePort.findByState(state);
-    }
-
-    private void validateId(UUID id) {
+    private void validateId(String id) {
         if (id == null) {
             throw new DeviceValidationException("Device id must not be null");
+        }
+
+        try {
+            UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            throw new DeviceValidationException("Invalid UUID format for device id: " + id);
         }
     }
 
     private void validateName(String name) {
-        if (name == null || name.isBlank()) {
+        if (isBlank(name)) {
             throw new DeviceValidationException("Device name must not be blank");
         }
     }
 
     private void validateBrand(String brand) {
-        if (brand == null || brand.isBlank()) {
+        if (isBlank(brand)) {
             throw new DeviceValidationException("Device brand must not be blank");
         }
     }
