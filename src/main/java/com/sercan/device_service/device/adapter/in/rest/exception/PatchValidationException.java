@@ -5,6 +5,3 @@ public class PatchValidationException extends RuntimeException {
         super(message);
     }
 }
-
-
-

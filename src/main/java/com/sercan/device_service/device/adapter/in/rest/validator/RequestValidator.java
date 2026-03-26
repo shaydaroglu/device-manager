@@ -1,6 +1,5 @@
 package com.sercan.device_service.device.adapter.in.rest.validator;
 
-import com.sercan.device_service.device.adapter.in.rest.dto.request.DeviceFilter;
 import com.sercan.device_service.device.adapter.in.rest.dto.request.PatchDeviceRequestDto;
 import com.sercan.device_service.device.adapter.in.rest.exception.PatchValidationException;
 import com.sercan.device_service.device.adapter.in.rest.exception.SearchFilterValidationException;
